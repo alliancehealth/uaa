@@ -27,7 +27,7 @@ public class LdapSocketFactory extends UaaSocketFactory {
         return instance;
     }
 
-    LdapSocketFactory() {
+    public LdapSocketFactory() {
         super(getDefaultSocketFactory());
     }
 }
