@@ -18,7 +18,7 @@ import org.apache.directory.api.util.DummySSLSocketFactory;
 import org.apache.http.conn.ssl.AllowAllHostnameVerifier;
 import org.cloudfoundry.identity.uaa.provider.ldap.extension.DefaultTlsDirContextAuthenticationStrategy;
 import org.cloudfoundry.identity.uaa.provider.ldap.extension.ExternalTlsDirContextAuthenticationStrategy;
-import org.cloudfoundry.identity.uaa.security.LdapSocketFactory;
+import org.cloudfoundry.identity.uaa.util.socket.LdapSocketFactory;
 import org.springframework.ldap.core.support.AbstractTlsDirContextAuthenticationStrategy;
 import org.springframework.ldap.core.support.DirContextAuthenticationStrategy;
 import org.springframework.ldap.core.support.SimpleDirContextAuthenticationStrategy;

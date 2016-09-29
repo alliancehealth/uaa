@@ -97,7 +97,7 @@ public class NestedLdapAuthoritiesPopulator extends DefaultLdapAuthoritiesPopula
     @Override
     public Set<GrantedAuthority> getGroupMembershipRoles(String userDn, String username) {
         if (getGroupSearchBase() == null) {
-            return new HashSet<GrantedAuthority>();
+            return new HashSet<>();
         }
 
         Set<GrantedAuthority> authorities = new HashSet<GrantedAuthority>();

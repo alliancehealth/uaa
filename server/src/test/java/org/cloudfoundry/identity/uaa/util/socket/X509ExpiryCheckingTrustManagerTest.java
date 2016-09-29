@@ -1,5 +1,5 @@
 /*
- *********************************************************************************
+ * ****************************************************************************
  *     Cloud Foundry
  *     Copyright (c) [2009-2016] Pivotal Software, Inc. All Rights Reserved.
  *
@@ -10,9 +10,10 @@
  *     separate copyright notices and license terms. Your use of these
  *     subcomponents is subject to the terms and conditions of the
  *     subcomponent's license, as noted in the LICENSE file.
- *******************************************************************************/
+ * ****************************************************************************
+ */
 
-package org.cloudfoundry.identity.uaa.security;
+package org.cloudfoundry.identity.uaa.util.socket;
 
 import org.junit.Assert;
 import org.junit.Test;

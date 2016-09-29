@@ -1,5 +1,5 @@
 /*
- *********************************************************************************
+ * ****************************************************************************
  *     Cloud Foundry
  *     Copyright (c) [2009-2016] Pivotal Software, Inc. All Rights Reserved.
  *
@@ -10,9 +10,10 @@
  *     separate copyright notices and license terms. Your use of these
  *     subcomponents is subject to the terms and conditions of the
  *     subcomponent's license, as noted in the LICENSE file.
- *******************************************************************************/
+ * ****************************************************************************
+ */
 
-package org.cloudfoundry.identity.uaa.security;
+package org.cloudfoundry.identity.uaa.util.socket;
 
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
@@ -44,7 +45,7 @@ public class X509ExpiryCheckingTrustManager implements X509TrustManager {
         }
     }
 
-    protected void setDelegate(X509TrustManager delegate) {
+    public void setDelegate(X509TrustManager delegate) {
         this.delegate = delegate;
     }
 
