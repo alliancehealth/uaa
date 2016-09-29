@@ -16,18 +16,45 @@ package org.cloudfoundry.identity.uaa.config;
 
 import org.cloudfoundry.identity.uaa.util.JsonUtils;
 import org.cloudfoundry.identity.uaa.zone.IdentityZoneConfiguration;
+import org.cloudfoundry.identity.uaa.zone.SSLConfiguration;
 import org.junit.Before;
 import org.junit.Test;
 
+import static java.lang.Boolean.TRUE;
+import static junit.framework.TestCase.assertNotNull;
+import static org.cloudfoundry.identity.uaa.zone.SSLConfiguration.VerificationType.STRICT;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class IdentityZoneConfigurationTests {
 
     private IdentityZoneConfiguration definition;
+    private String defaultv37ConfigString;
     @Before
     public void configure() {
         definition = new IdentityZoneConfiguration();
+        defaultv37ConfigString = "{\"tokenPolicy\":{\"accessTokenValidity\":-1,\"refreshTokenValidity\":-1,\"jwtRevocable\":false,\"activeKeyId\":null,\"keys\":{}},\"samlConfig\":{\"assertionSigned\":true,\"requestSigned\":true,\"wantAssertionSigned\":false,\"wantAuthnRequestSigned\":false,\"assertionTimeToLiveSeconds\":600,\"certificate\":null,\"privateKey\":null,\"privateKeyPassword\":null},\"links\":{\"logout\":{\"redirectUrl\":\"/login\",\"redirectParameterName\":\"redirect\",\"disableRedirectParameter\":true,\"whitelist\":null},\"selfService\":{\"selfServiceLinksEnabled\":true,\"signup\":\"/create_account\",\"passwd\":\"/forgot_password\"}},\"prompts\":[{\"name\":\"username\",\"type\":\"text\",\"text\":\"Email\"},{\"name\":\"password\",\"type\":\"password\",\"text\":\"Password\"},{\"name\":\"passcode\",\"type\":\"password\",\"text\":\"One Time Code (Get on at /passcode)\"}],\"idpDiscoveryEnabled\":false,\"accountChooserEnabled\":false}";
+    }
+
+    @Test
+    public void can_deserialize_pre_sslconfig_configuration() {
+        IdentityZoneConfiguration config = JsonUtils.readValue(defaultv37ConfigString, IdentityZoneConfiguration.class);
+        assertNull(config.getSslConfiguration());
+    }
+
+    @Test
+    public void can_serialize_sslconfig_configuration() {
+        definition.setSslConfiguration(new SSLConfiguration(STRICT));
+        String value = JsonUtils.writeValueAsString(definition);
+        IdentityZoneConfiguration config = JsonUtils.readValue(value, IdentityZoneConfiguration.class);
+        assertNotNull(config.getSslConfiguration());
+        assertEquals(STRICT, config.getSslConfiguration().getVerificationType());
+        assertEquals(TRUE, config.getSslConfiguration().getVerifyHostname());
+        assertEquals(TRUE, config.getSslConfiguration().getCheckExpiry());
+        assertNull(config.getSslConfiguration().getEnabledCiphers());
+        assertNull(config.getSslConfiguration().getTrustedCertificates());
     }
 
     @Test

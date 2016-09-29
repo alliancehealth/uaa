@@ -35,6 +35,7 @@ public class IdentityZoneConfiguration {
     private boolean idpDiscoveryEnabled = false;
     private BrandingInformation branding;
     private boolean accountChooserEnabled;
+    private SSLConfiguration sslConfiguration = null;
 
     public IdentityZoneConfiguration() {}
 
@@ -99,5 +100,13 @@ public class IdentityZoneConfiguration {
 
     public boolean isAccountChooserEnabled() {
         return accountChooserEnabled;
+    }
+
+    public SSLConfiguration getSslConfiguration() {
+        return sslConfiguration;
+    }
+
+    public void setSslConfiguration(SSLConfiguration sslConfiguration) {
+        this.sslConfiguration = sslConfiguration;
     }
 }
