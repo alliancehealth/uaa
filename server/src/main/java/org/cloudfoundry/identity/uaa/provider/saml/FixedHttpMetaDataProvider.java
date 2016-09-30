@@ -102,6 +102,7 @@ public class FixedHttpMetaDataProvider extends HTTPMetadataProvider {
     public byte[] fetchMetadata() throws MetadataProviderException {
         byte[] metadata = metadataCache.getIfPresent(getMetadataURI());
         if (metadata==null || (System.currentTimeMillis()-lastFetchTime)>getExpirationTimeMillis()) {
+            //just get the byte[] ourselves
             metadata = super.fetchMetadata();
             lastFetchTime = System.currentTimeMillis();
             metadataCache.put(getMetadataURI(), metadata);
