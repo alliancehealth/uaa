@@ -50,6 +50,7 @@ import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.client.BaseClientDetails;
 import org.springframework.security.oauth2.provider.client.InMemoryClientDetailsService;
 
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -321,7 +322,7 @@ public class CheckTokenEndpointTests {
     }
 
     @Test(expected = InvalidTokenException.class)
-    public void testRejectInvalidIssuer() {
+    public void testRejectInvalidIssuer() throws URISyntaxException {
         setAccessToken(tokenServices.createAccessToken(authentication));
         tokenServices.setIssuer("http://some.other.issuer");
         endpoint.checkToken(getAccessToken(), Collections.emptyList());
