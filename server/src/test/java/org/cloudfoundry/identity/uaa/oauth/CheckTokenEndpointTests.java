@@ -188,11 +188,11 @@ public class CheckTokenEndpointTests {
     }
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         setUp(useOpaque);
     }
 
-    public void setUp(boolean opaque) {
+    public void setUp(boolean opaque) throws URISyntaxException {
         defaultZone = IdentityZone.getUaa();
 
         userAuthorities = new ArrayList<>();
@@ -273,6 +273,8 @@ public class CheckTokenEndpointTests {
         clientDetailsService.setClientDetailsStore(clientDetailsStore);
         tokenServices.setClientDetailsService(clientDetailsService);
         tokenServices.setTokenProvisioning(tokenProvisioning);
+        tokenServices.setIssuer("http://localhost:8080/uaa");
+        tokenServices.afterPropertiesSet();
     }
 
     private void configureDefaultZoneKeys(Map<String, String> keys) {
