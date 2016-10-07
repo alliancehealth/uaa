@@ -12,14 +12,15 @@
  *******************************************************************************/
 package org.cloudfoundry.identity.uaa.account;
 
+import org.cloudfoundry.identity.uaa.authentication.AccountNotVerifiedException;
 import org.cloudfoundry.identity.uaa.authentication.UaaPrincipal;
 import org.cloudfoundry.identity.uaa.constants.OriginKeys;
 import org.cloudfoundry.identity.uaa.scim.ScimUser;
 import org.cloudfoundry.identity.uaa.user.UaaAuthority;
 import org.cloudfoundry.identity.uaa.zone.IdentityZoneHolder;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -32,14 +33,17 @@ import java.io.IOException;
 public class ResetPasswordAuthenticationFilter extends OncePerRequestFilter {
     private final ResetPasswordService service;
     private final AuthenticationSuccessHandler handler;
+    private final AuthenticationEntryPoint entryPoint;
 
-    public ResetPasswordAuthenticationFilter(ResetPasswordService service, AuthenticationSuccessHandler handler) {
+    public ResetPasswordAuthenticationFilter(ResetPasswordService service, AuthenticationSuccessHandler handler, AuthenticationEntryPoint entryPoint) {
         this.service = service;
         this.handler = handler;
+        this.entryPoint = entryPoint;
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        String email = request.getParameter("email");
         String code = request.getParameter("code");
         String password = request.getParameter("password");
         String passwordConfirmation = request.getParameter("password_confirmation");
@@ -54,7 +58,9 @@ public class ResetPasswordAuthenticationFilter extends OncePerRequestFilter {
             handler.onAuthenticationSuccess(request, response, token);
             return;
         } else{
-            request.getRequestDispatcher("/reset_password").forward(request, response);
+            request.setAttribute("message_code", validation.getMessageCode());
+            request.setAttribute("email", email);
+            entryPoint.commence(request, response, new AccountNotVerifiedException("Password not validated"));
         }
 
 

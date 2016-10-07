@@ -16,18 +16,17 @@ import org.cloudfoundry.identity.uaa.scim.ScimUser;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.stubbing.Answer;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
 import javax.servlet.FilterChain;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import static junit.framework.TestCase.assertNull;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyObject;
@@ -51,6 +50,7 @@ public class ResetPasswordAuthenticationFilterTest {
     private ResetPasswordService.ResetPasswordResponse resetPasswordResponse;
     private ResetPasswordAuthenticationFilter filter;
     private AuthenticationSuccessHandler authenticationSuccessHandler;
+    private AuthenticationEntryPoint entryPoint;
 
     @Before
     @After
@@ -77,7 +77,8 @@ public class ResetPasswordAuthenticationFilterTest {
         resetPasswordResponse = new ResetPasswordService.ResetPasswordResponse(user, "/", null);
         when(service.resetPassword(eq(code), eq(password))).thenReturn(resetPasswordResponse);
         authenticationSuccessHandler = mock(AuthenticationSuccessHandler.class);
-        filter = new ResetPasswordAuthenticationFilter(service, authenticationSuccessHandler);
+        entryPoint = mock(AuthenticationEntryPoint.class);
+        filter = new ResetPasswordAuthenticationFilter(service, authenticationSuccessHandler, entryPoint);
     }
 
     @Test
@@ -99,7 +100,7 @@ public class ResetPasswordAuthenticationFilterTest {
         verify(authenticationSuccessHandler, times(0)).onAuthenticationSuccess(same(request), same(response), any(Authentication.class));
         verify(service, times(0)).resetPassword(eq(code), eq(password));
         verify(response, times(0)).sendRedirect("/reset_password");
-        verify(request, times(1)).getRequestDispatcher(eq("/reset_password"));
+        verify(entryPoint, times(1)).commence(same(request), same(response), any(AuthenticationException.class));
         assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 
