@@ -12,7 +12,7 @@
  *******************************************************************************/
 package org.cloudfoundry.identity.uaa.account;
 
-import org.cloudfoundry.identity.uaa.authentication.AccountNotVerifiedException;
+import org.cloudfoundry.identity.uaa.account.PasswordConfirmationValidation.PasswordConfirmationException;
 import org.cloudfoundry.identity.uaa.authentication.UaaPrincipal;
 import org.cloudfoundry.identity.uaa.constants.OriginKeys;
 import org.cloudfoundry.identity.uaa.error.UaaException;
@@ -52,27 +52,22 @@ public class ResetPasswordAuthenticationFilter extends OncePerRequestFilter {
         String password = request.getParameter("password");
         String passwordConfirmation = request.getParameter("password_confirmation");
 
-        PasswordConfirmationValidation validation = new PasswordConfirmationValidation(password, passwordConfirmation);
-        if (validation.valid()) {
-            try {
-                ResetPasswordService.ResetPasswordResponse resetPasswordResponse = service.resetPassword(code, password);
-                ScimUser user = resetPasswordResponse.getUser();
-                UaaPrincipal uaaPrincipal = new UaaPrincipal(user.getId(), user.getUserName(), user.getPrimaryEmail(), OriginKeys.UAA, null, IdentityZoneHolder.get().getId());
-                UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(uaaPrincipal, null, UaaAuthority.USER_AUTHORITIES);
-                SecurityContextHolder.getContext().setAuthentication(token);
-                handler.onAuthenticationSuccess(request, response, token);
-            } catch (InvalidPasswordException e) {
-                entryPoint.commence(request, response, new BadCredentialsException(e.getMessagesAsOneString(), e));
-            } catch (UaaException e) {
-                entryPoint.commence(request, response, new InternalAuthenticationServiceException(e.getMessage(), e));
-            }
-            return;
-        } else {
-            request.setAttribute("message_code", validation.getMessageCode());
-            request.setAttribute("email", email);
-            entryPoint.commence(request, response, new AccountNotVerifiedException("Password not validated"));
+        PasswordConfirmationValidation validation = new PasswordConfirmationValidation(email, password, passwordConfirmation);
+        try {
+            validation.throwIfNotValid();
+            ResetPasswordService.ResetPasswordResponse resetPasswordResponse = service.resetPassword(code, password);
+            ScimUser user = resetPasswordResponse.getUser();
+            UaaPrincipal uaaPrincipal = new UaaPrincipal(user.getId(), user.getUserName(), user.getPrimaryEmail(), OriginKeys.UAA, null, IdentityZoneHolder.get().getId());
+            UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(uaaPrincipal, null, UaaAuthority.USER_AUTHORITIES);
+            SecurityContextHolder.getContext().setAuthentication(token);
+            handler.onAuthenticationSuccess(request, response, token);
+        } catch (InvalidPasswordException e) {
+            entryPoint.commence(request, response, new BadCredentialsException(e.getMessagesAsOneString(), e));
+        } catch (UaaException e) {
+            entryPoint.commence(request, response, new InternalAuthenticationServiceException(e.getMessage(), e));
+        } catch (PasswordConfirmationException pe) {
+            entryPoint.commence(request, response, new BadCredentialsException("Password did not pass validation.", pe));
         }
-
-
+        return;
     }
 }

@@ -12,6 +12,7 @@
  *******************************************************************************/
 package org.cloudfoundry.identity.uaa.account;
 
+import org.cloudfoundry.identity.uaa.account.PasswordConfirmationValidation.PasswordConfirmationException;
 import org.cloudfoundry.identity.uaa.error.UaaException;
 import org.cloudfoundry.identity.uaa.scim.ScimUser;
 import org.cloudfoundry.identity.uaa.scim.exception.InvalidPasswordException;
@@ -31,8 +32,10 @@ import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletResponse;
 
 import static junit.framework.TestCase.assertNull;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
@@ -58,6 +61,7 @@ public class ResetPasswordAuthenticationFilterTest {
     private ResetPasswordAuthenticationFilter filter;
     private AuthenticationSuccessHandler authenticationSuccessHandler;
     private AuthenticationEntryPoint entryPoint;
+    private String email;
 
     @Before
     @After
@@ -70,11 +74,14 @@ public class ResetPasswordAuthenticationFilterTest {
         code = "12345";
         password = "test";
         passwordConfirmation = "test";
+        email = "test@test.org";
 
         request = new MockHttpServletRequest("POST", "/reset_password.do");
         request.setParameter("code", code);
         request.setParameter("password", password);
         request.setParameter("password_confirmation", passwordConfirmation);
+        request.setParameter("email", email);
+
 
         response = mock(HttpServletResponse.class);
         chain = mock(FilterChain.class);
@@ -102,41 +109,48 @@ public class ResetPasswordAuthenticationFilterTest {
     @Test
     public void invalid_password_confirmation() throws Exception {
         request.setParameter("password_confirmation", "invalid");
-        filter.doFilterInternal(request, response, chain);
-        //do our assertion
-        verify(authenticationSuccessHandler, times(0)).onAuthenticationSuccess(same(request), same(response), any(Authentication.class));
-        verify(service, times(0)).resetPassword(eq(code), eq(password));
-        verify(entryPoint, times(1)).commence(same(request), same(response), any(AuthenticationException.class));
-        assertNull(SecurityContextHolder.getContext().getAuthentication());
+        Exception e = error_during_password_reset(new PasswordConfirmationException(null,null));
+        assertTrue(e instanceof AuthenticationException);
+        assertNotNull(e.getCause());
+        assertTrue(e.getCause() instanceof PasswordConfirmationException);
+        PasswordConfirmationException pe = (PasswordConfirmationException)e.getCause();
+        assertEquals("form_error", pe.getMessageCode());
+        assertEquals(email, pe.getEmail());
     }
 
 
     @Test
     public void error_during_password_reset_uaa_exception() throws Exception {
-        error_during_password_reset(new UaaException("failed"));
+        reset(service);
+        UaaException failed = new UaaException("failed");
+        when(service.resetPassword(anyString(), anyString())).thenThrow(failed);
+        error_during_password_reset(failed);
+        verify(service, times(1)).resetPassword(eq(code), eq(password));
     }
 
     @Test
     public void error_during_password_reset_invalid_password_exception() throws Exception {
-        error_during_password_reset(new InvalidPasswordException("failed", HttpStatus.BAD_REQUEST));
+        reset(service);
+        InvalidPasswordException failed = new InvalidPasswordException("failed", HttpStatus.BAD_REQUEST);
+        when(service.resetPassword(anyString(), anyString())).thenThrow(failed);
+        error_during_password_reset(failed);
+        verify(service, times(1)).resetPassword(eq(code), eq(password));
     }
 
 
-    public void error_during_password_reset(Exception failed) throws Exception {
-        reset(service);
-        when(service.resetPassword(anyString(), anyString())).thenThrow(failed);
+    public AuthenticationException error_during_password_reset(Exception failed) throws Exception {
         ArgumentCaptor<AuthenticationException> authenticationException = ArgumentCaptor.forClass(AuthenticationException.class);
-
         filter.doFilterInternal(request, response, chain);
 
         //do our assertion
         verify(authenticationSuccessHandler, times(0)).onAuthenticationSuccess(same(request), same(response), any(Authentication.class));
-        verify(service, times(1)).resetPassword(eq(code), eq(password));
         verify(entryPoint, times(1)).commence(same(request), same(response), authenticationException.capture());
         assertNull(SecurityContextHolder.getContext().getAuthentication());
 
         AuthenticationException exception = authenticationException.getValue();
-        assertSame(failed, exception.getCause());
+        assertSame(failed.getClass(), exception.getCause().getClass());
+
+        return exception;
     }
 
 
