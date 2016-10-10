@@ -123,6 +123,24 @@
         <csrf disabled="true"/>
     </http>
 
+    <bean id="resetPasswordEntryPoint" class="org.cloudfoundry.identity.uaa.account.ResetPasswordAuthenticationEntryPoint"/>
+    <bean id="resetPasswordAuthenticationFilter" class="org.cloudfoundry.identity.uaa.account.ResetPasswordAuthenticationFilter">
+        <constructor-arg name="entryPoint" ref="resetPasswordEntryPoint"/>
+        <constructor-arg name="handler" ref="accountSavingAuthenticationSuccessHandler"/>
+        <constructor-arg name="service" ref="resetPasswordService"/>
+    </bean>
+    <http name="resetPasswordSubmit"
+          pattern="/reset_password.do"
+          disable-url-rewriting="true"
+          entry-point-ref="resetPasswordEntryPoint"
+          use-expressions="false"
+
+          xmlns="http://www.springframework.org/schema/security">
+        <custom-filter ref="resetPasswordAuthenticationFilter" position="LAST"/>
+        <csrf disabled="false"/>
+        <access-denied-handler ref="loginEntryPoint"/>
+    </http>
+
     <http name="resetPasswordSecurity"
           pattern="/reset_password**"
           disable-url-rewriting="true"

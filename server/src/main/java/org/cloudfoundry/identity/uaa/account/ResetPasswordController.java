@@ -209,7 +209,7 @@ public class ResetPasswordController {
         return code;
     }
 
-    @RequestMapping(value = "/reset_password.do", method = RequestMethod.POST)
+    //@RequestMapping(value = "/reset_password.do", method = RequestMethod.POST)
     public String resetPassword(Model model,
                                 @RequestParam("code") String code,
                                 @RequestParam("email") String email,
